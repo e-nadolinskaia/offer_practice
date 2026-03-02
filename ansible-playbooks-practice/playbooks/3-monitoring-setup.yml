@@ -1,0 +1,113 @@
+- name: 'Monitoring setup'
+  hosts: webservers
+  vars_files:
+    - vars/main.yml 
+  become: yes
+
+  tasks:
+    - name: 'Download Node Exporter archive'
+      get_url:
+        url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-arm64.tar.gz"
+        dest: /tmp/node_exporter-{{ node_exporter_version }}.linux-arm64.tar.gz
+        mode: '0644'
+        timeout: 30
+        validate_certs: yes
+        force: yes
+      register: download_result
+
+    - name: 'Unarchive Node Exporter'
+      unarchive:
+        src: /tmp/node_exporter-{{ node_exporter_version }}.linux-arm64.tar.gz
+        dest: /tmp
+        remote_src: yes
+        creates: /tmp/node_exporter-{{ node_exporter_version }}.linux-arm64/node_exporter
+      when: download_result is success
+
+    - name: 'Copy binary Node Exporter to /usr/local/bin'
+      copy:
+        src: /tmp/node_exporter-{{ node_exporter_version }}.linux-arm64/node_exporter
+        dest: /usr/local/bin/node_exporter
+        owner: node_exporter
+        group: node_exporter
+        mode: '0755'
+        remote_src: yes
+      when: download_result is success
+
+    - name: 'Create node_exporter group'
+      group:
+        name: node_exporter
+        system: yes
+        state: present
+
+    - name: 'Create node_exporter user'
+      user:
+        name: node_exporter
+        group: node_exporter
+        system: yes
+        shell: /usr/sbin/nologin
+        create_home: no
+        state: present
+
+
+    - name: 'Ensure correct mode and owner of Node Exporter'
+      file:
+        path: /usr/local/bin/node_exporter
+        owner: node_exporter
+        group: node_exporter
+        mode: '0755'
+
+    - name: 'Create Node Exporter systemd service file'
+      copy:
+        dest: /etc/systemd/system/node_exporter.service
+        content: |
+          [Unit]
+          Description=Node Exporter
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=node_exporter
+          Group=node_exporter
+          Type=simple
+          ExecStart=/usr/local/bin/node_exporter --web.listen-address=:9100
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+      notify: 'Restart node_exporter'
+
+    - name: 'Setup UFW'
+      ufw:
+        rule: allow
+        port: '9100'
+        proto: tcp
+        from_ip: '{{ prometheus_server_ip }}'
+        state: enabled
+
+    - name: 'Ensure Node Exporter is enabled and started'
+      systemd:
+        name: node_exporter
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: 'Check Node Exporter metrics'
+      uri:
+        url: "http://localhost:9100/metrics"
+        method: GET
+        status_code: 200
+      register: metrics_output
+      retries: 5
+      delay: 3
+      until: metrics_output.status == 200
+
+  handlers:
+    - name: 'Restart node_exporter'
+      service:
+        name: node_exporter
+        state: restarted
+
+
+
+
+  

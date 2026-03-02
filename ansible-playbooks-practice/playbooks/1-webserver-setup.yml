@@ -1,0 +1,111 @@
+- name: 'Install and setup nginx'
+  hosts: webservers
+  vars_files:
+    - vars/main.yml 
+  become: yes
+
+  tasks:
+    - name: 'Install packages: nginx, ufw, python3-pip'
+      apt:
+        name:
+          - nginx
+          - ufw
+          - python3-pip
+        update_cache: yes
+        state: present
+
+    - name: 'Create appuser'
+      user:
+        name: appuser
+        shell: /bin/bash
+        groups: sudo
+        append: yes
+        create_home: true
+        state: present
+
+    - name: 'Create directory'
+      file:
+        path: /var/www/myapp
+        state: directory
+        owner: appuser
+        mode: '0755'
+
+    - name: 'Create myapp logs directory'
+      file:
+        path: /var/log/myapp
+        state: directory
+        owner: www-data
+        group: adm
+        mode: '0755'
+
+    - name: 'Setup UFW'
+      ufw:
+        rule: allow
+        port: '{{ item }}'
+        proto: tcp
+        state: enabled
+      loop:
+        - '80'
+        - '443'
+
+    - name: 'Create directory for SSL'
+      file:
+        path: /etc/nginx/ssl
+        state: directory
+        mode: '0755'
+
+    - name: 'Generate self-signed SSL certificate'
+      command: >
+          openssl req -x509 -nodes -days 365 -newkey rsa:2048
+          -keyout /etc/nginx/ssl/nginx.key
+          -out /etc/nginx/ssl/nginx.crt
+          -subj "/C=RU/ST=Moscow/L=Moscow/O=Development/CN={{ inventory_hostname }}"
+      args:
+        creates: /etc/nginx/ssl/nginx.crt
+
+    - name: 'Generate nginx config'
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-enabled/myapp.conf
+      notify: Reload nginx
+
+    - name: 'Start and enable nginx'
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: 'Configure logrotate for myapp'
+      copy:
+        dest: /etc/logrotate.d/myapp
+        content: |
+          /var/log/myapp/*.log {
+              daily
+              missingok
+              rotate 7
+              compress
+              delaycompress
+              notifempty
+              create 0640 www-data adm
+              sharedscripts
+              postrotate
+                  /usr/sbin/nginx -s reload > /dev/null 2>/dev/null || true
+              endscript
+          }
+
+    - name: 'Nginx healthcheck'
+      uri:
+        url: "http://{{ hostvars['server1']['ansible_host'] }}" 
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 5
+      delay: 3
+
+  handlers:
+    - name: 'Reload nginx'
+      service:
+        name: nginx
+        state: reloaded
+
+    

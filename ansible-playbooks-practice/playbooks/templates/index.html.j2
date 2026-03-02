@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тест Ansible</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; background-color: #f4f4f9; }
+        .container { border: 2px solid #4CAF50; display: inline-block; padding: 20px; border-radius: 10px; background: white; }
+        h1 { color: #4CAF50; }
+        p { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Успех! Веб-сервер работает.</h1>
+        <p>Этот файл был создан через <b>Ansible</b>.</p>
+        <hr>
+        <p>Имя хоста: <strong>{{ inventory_hostname }}</strong></p>
+        <p>Дата деплоя: <strong>{{ ansible_date_time.date }}</strong></p>
+    </div>
+</body>
+</html>
