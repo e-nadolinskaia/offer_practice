@@ -1,0 +1,5 @@
+listen_addresses = '{{ postgresql_listen_addresses | default("localhost") }}'
+max_connections = {{ postgresql_max_connections | default(100) }}
+data_directory = '/var/lib/postgresql/16/main'
+hba_file = '/etc/postgresql/16/main/pg_hba.conf'
+ident_file = '/etc/postgresql/16/main/pg_ident.conf'

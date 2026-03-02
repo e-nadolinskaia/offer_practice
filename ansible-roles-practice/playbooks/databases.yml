@@ -1,0 +1,5 @@
+- name: 'Install and setup PostgreSQL'
+  hosts: db_servers
+  become: yes
+  roles:
+    - postgresql

@@ -1,0 +1,12 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for roles/common
+- name: 'Restart SSH'
+  service:
+    name: ssh
+    state: restarted
+
+- name: 'Restart UFW'
+  service:
+    name: ufw 
+    state: restarted

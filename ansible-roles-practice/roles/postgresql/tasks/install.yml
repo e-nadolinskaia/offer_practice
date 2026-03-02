@@ -1,0 +1,76 @@
+---
+- name: 'Install PostgreSQL {{ postgresql_version }} and dependencies'
+  apt:
+    name: '{{ postgresql_packages }}'
+    state: present
+    update_cache: yes
+
+- name: 'Enable and start PostgreSQL service'
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: 'Copy postgresql.conf'
+  template:
+    src: postgresql.conf.j2
+    dest: "/etc/postgresql/{{ postgresql_version }}/main/postgresql.conf"
+    owner: postgres
+    group: postgres
+    mode: '0644'
+  notify: 'Restart postgresql'
+
+- name: 'Copy pg_hba.conf'
+  template:
+    src: pg_hba.conf.j2
+    dest: "/etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf"
+    owner: postgres
+    group: postgres
+    mode: '0640'
+  notify: 'Restart postgresql'
+
+- name: 'Flush handlers to apply config changes immediately'
+  meta: flush_handlers
+
+- name: 'Wait for PostgreSQL socket to be ready'
+  wait_for:
+    path: "/var/run/postgresql/.s.PGSQL.5432"
+    state: present
+    timeout: 30
+
+- name: 'Create a new PostgreSQL database'
+  community.postgresql.postgresql_db:
+    name: "{{ db_name }}"
+  become: yes
+  become_user: postgres
+
+- name: 'Create database user'
+  community.postgresql.postgresql_user:
+    db: "{{ db_name }}"
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    state: present
+  become: yes
+  become_user: postgres
+
+- name: 'Set database level privileges'
+  community.postgresql.postgresql_privs:
+    db: "{{ db_name }}"
+    role: "{{ db_user }}"
+    type: database
+    privs: ALL
+    state: present
+  become: yes
+  become_user: postgres
+
+- name: 'Set schema level privileges'
+  community.postgresql.postgresql_privs:
+    db: "{{ db_name }}"
+    role: "{{ db_user }}"
+    objs: ALL_IN_SCHEMA
+    type: table
+    privs: ALL
+    schema: public
+    state: present
+  become: yes
+  become_user: postgres

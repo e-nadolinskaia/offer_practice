@@ -1,0 +1,24 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for roles/postgresql
+postgresql_version: "16"
+postgresql_listen_addresses: "localhost,{{ ansible_default_ipv4.address }}"
+postgresql_max_connections: 100
+postgresql_packages: 
+  - "postgresql-{{ postgresql_version }}"
+  - "postgresql-contrib-{{ postgresql_version }}"
+  - "acl"
+  - "python3-psycopg2"
+app_server_ip: "192.168.64.1"
+
+db_name: myapp_db
+db_user: myapp_user
+db_password: "{{ vault_db_password }}"
+db_host: "{{ ansible_default_ipv4.address }}"
+vault_db_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          61393331363430306166363930306531613635363766626661383538613032633261633637353138
+          3332663961373432663838613963643934393131633462620a316239363036323963656336383733
+          35656335623866643961666364396332306638396266373661396665653638336634373639313861
+          6233346661396136300a633765636534336237303932313638363230353663646137633065313736
+          66363463663437643930636334623936303638643838316536636234313130656461

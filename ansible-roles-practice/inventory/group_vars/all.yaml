@@ -1,0 +1,1 @@
+deploy_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICY4rraXdPYav/tbYV3zW1RJR9TLrvX0Q/ZtqLavrRBn ansible_deploy_key"

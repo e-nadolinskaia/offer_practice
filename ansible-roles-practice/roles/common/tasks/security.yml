@@ -1,0 +1,35 @@
+- name: 'Allow access to SSH port'
+  ufw:
+    rule: allow
+    port: "{{ ssh_port | default('22') }}"
+    proto: tcp
+
+- name: 'Deny all incoming traffic'
+  ufw:
+    policy: deny
+    direction: incoming
+    state: enabled
+
+- name: 'Configure SSH daemon'
+  template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    validate: '/usr/sbin/sshd -t -f %s'
+    mode: '0644'
+  notify: 'Restart SSH'
+
+- name: 'Install unattended-upgrades'
+  apt:
+    name: unattended-upgrades
+    state: present
+    update_cache: yes
+
+- name: 'Enable automatic security updates'
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+
+

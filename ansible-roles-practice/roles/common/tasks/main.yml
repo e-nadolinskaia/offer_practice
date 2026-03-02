@@ -1,0 +1,14 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/common
+- name: 'Install common packages'
+  import_tasks: packages.yml
+
+- name: 'Create user'
+  import_tasks: users.yml
+
+- name: 'Setup security settings'
+  import_tasks: security.yml
+
+- name: 'Set timezone'
+  import_tasks: timezone.yml

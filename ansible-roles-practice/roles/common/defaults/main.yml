@@ -1,0 +1,15 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for roles/common
+common_packages:
+  - curl
+  - wget
+  - vim
+  - htop
+  - git
+deploy_user: deploy
+deploy_user_groups: deploy,sudo
+ssh_port: 22
+ssh_disable_root: true
+ssh_password_auth: false
+timezone: "Europe/Moscow"
