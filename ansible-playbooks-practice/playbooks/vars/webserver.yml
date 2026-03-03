@@ -1,2 +1,6 @@
 domain_name: myapp.local
 app_directory: /var/www/myapp
+common_packages:
+  - nginx
+  - ufw
+  - python3-pip

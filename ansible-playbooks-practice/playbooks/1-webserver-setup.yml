@@ -5,12 +5,9 @@
   become: yes
 
   tasks:
-    - name: 'Install packages: nginx, ufw, python3-pip'
+    - name: 'Install packages'
       apt:
-        name:
-          - nginx
-          - ufw
-          - python3-pip
+        name: '{{ common_packages }}'
         update_cache: yes
         state: present
 
