@@ -1,5 +1,0 @@
-app_user: appuser
-app_directory: /var/www/myapp
-domain_name: myapp.local
-node_exporter_version: "1.7.0"
-prometheus_server_ip: 192.168.1.100
